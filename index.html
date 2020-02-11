@@ -491,11 +491,9 @@ function loadFile() {
 
 	let xmlHttp = new XMLHttpRequest();
 	xmlHttp.onload = function() {
-		let result = null;
 		if (xmlHttp.status == 200) {
-			result = xmlHttp.responseText;
+			decodeFile(xmlHttp.responseText);
 		}
-		console.log(result);
 	};
 
 	xmlHttp.open("GET", "miditest.mid", true);
