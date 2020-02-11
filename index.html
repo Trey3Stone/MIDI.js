@@ -47,7 +47,7 @@ _,e4,_,c4,d4,b3,_,_
 	const A0_FREQ = 27.5;
 	const KEYS = 8;
 
-	const VOLUME = 0.15;
+	const VOLUME = 0.2;
 
 	const TEMPO = 45; // Supports 8th notes
 	const METER = 60 / TEMPO / 8;
@@ -104,6 +104,9 @@ _,e4,_,c4,d4,b3,_,_
 		6
 	]
 
+
+	let PLAYING = false;
+
 	//var BPM = 120;
 
 	const canvas = document.getElementById("canvas");
@@ -119,7 +122,31 @@ function drawCanvas() {
 	ctx.save();
 
 	let width = canvas.width;
-	let height = Math.ceil(width / 10);
+	const keyWidth = width/52;
+	let height = canvas.height - Math.ceil(width / 10);
+
+	ctx.lineWidth = 0;
+	ctx.strokeStyle = "rgb(60, 60, 60)";
+
+
+	ctx.beginPath();
+
+	for (let i = 2; i < 52; i+=7) {
+		ctx.moveTo(i * keyWidth, 0);
+		ctx.lineTo(i * keyWidth, height);
+	}
+
+
+	for (let i = 0; i < Math.ceil(2*SIZE_SECONDS); i++) {
+		let y = i / SIZE_SECONDS * height / 2;
+		ctx.moveTo(0, height - y);
+		ctx.lineTo(width, height - y);
+	}
+
+	ctx.stroke();
+
+
+	height = Math.ceil(width / 10);
 
 	ctx.translate(0, canvas.height - height)
 
@@ -134,7 +161,7 @@ function drawCanvas() {
 
 	//ctx.strokeStyle = "rgb(40, 40, 40)";
 
-	const keyWidth = width/52;
+	
 	const keyHeight = height;
 
 	var xFill = 0;
@@ -475,6 +502,7 @@ function keyIsSharp(key) {
 
 
 function checkFile() {
+	if (PLAYING) return;
 	//document.write(note+"<br>");
 	
 	var inputFile = document.getElementById("fileUpload").files[0];
@@ -494,9 +522,7 @@ function checkFile() {
 }
 
 function loadFile(num) {
-
-	
-
+	if (PLAYING) return;
 
 	let xmlHttp = new XMLHttpRequest();
 	xmlHttp.onload = function() {
@@ -546,29 +572,7 @@ function decodeFile(res) {
 
 	console.log("Tempo Chunk size: "+chunkLen);
 
-	//var start = 22+chunkLen;
-
 	var start = 14;
-
-//Marker, Cue Point, Tempo, SMPTE Offset, Time Signature, and Key Signature
-
-/*
-Metas: 84 0 81 9 47 82 54
-       54 0 51 9 2f 52 36
-
-
-
-
-*/
-
-
-	/*
-	chunkId = String.fromCharCode.apply(String,
-		[data.getUint8(start), data.getUint8(start+1), data.getUint8(start+2), data.getUint8(start+3)]);
-
-	chunkLen = data.getUint32(start+4);
-*/
-	//console.log(chunkId +": " +chunkLen);
 
 	var i = start;
 
@@ -617,21 +621,16 @@ Metas: 84 0 81 9 47 82 54
 
 				//console.log("EVENT: " + event["status"] + " " + (i - 1 - start) + " " + event["time"]);
 
-				//var testPutInEventsList = false;
-
 				switch(event["status"] >> 4) {
 					case 0x8:
 						event["channel"] = event["status"] & 0xF;
 						event["key"] = data.getUint8(i++);
-						//console.log(data.getUint8(i));
 						event["velocity"] = data.getUint8(i++);
-						//testPutInEventsList = true;
 						break;
 					case 0x9:
 						event["channel"] = event["status"] & 0xF;
 						event["key"] = data.getUint8(i++);
 						event["velocity"] = data.getUint8(i++);
-						//testPutInEventsList = true;
 						break;
 					case 0xA:
 						i+=2;
@@ -659,8 +658,7 @@ Metas: 84 0 81 9 47 82 54
 									let tempo = data.getUint8(i++);
 									tempo = (tempo << 8) | data.getUint8(i++);
 									tempo = (tempo << 8) | data.getUint8(i++);
-									//console.log("tempo: " + tempo);
-									//console.log("bpm?: " + (60000000/(tempo)));
+
 									BPM = 60000000/tempo;
 
 									let timeStep = tempo / (1000000 * ppqn);
@@ -668,7 +666,7 @@ Metas: 84 0 81 9 47 82 54
 									event["step"] = timeStep;
 
 
-									console.log("bpm: " + BPM);
+									//console.log("bpm: " + BPM);
 									break;
 								default:
 									var length = data.getUint8(i++);
@@ -784,28 +782,12 @@ function compile() {
 }
 
 function compileMidi(events, timeStep) {
+
 	let notes = [];
-	//let BPM = 120;
-
-	//let timeStep = 60 / (BPM * ppqn);
-	//let timeStep = 1 / (2 * ppqn)
-	//var time = PLAYBACK_DELAY/timeStep;
-	let time = PLAYBACK_DELAY;
-
-	let lastTime = 0;
-
-/*
-	var i, j = 0;
-	while (i < timing.length) {
-		if (timing[i]["time"] < events[j]["time"]) {
-			events.splice(j, 0, timing[i++]);
-		}
-
-		j++
-	}
-*/
 	let openNotes = {};
 
+	let time = PLAYBACK_DELAY;
+	let lastTime = 0;
 
 	for (let i = 0; i < events.length; i++) {
 		let event = events[i];
@@ -818,22 +800,16 @@ function compileMidi(events, timeStep) {
 
 			//console.log("new timeStep: " + timeStep);
 		} else if (event["status"] >> 4 == 0x9 && event["velocity"] != 0) {
-			// Open note
 
-
-			//console.log("open");
-			//var key = {"start" : timeStep*time, "freq" : midiToFreq(event["note"])};
-			//var note = {"start" : timeStep*time, "key" : event["key"], "velocity" : event["velocity"]};
 			let note = {
 				"start" : time,
 				"key" : event["key"],
 				"channel" : event["channel"],
-				"velocity" : event["velocity"]};
+				"velocity" : event["velocity"]
+			};
 
 			let noteId = event["channel"] + " " + event["key"];
-			let noteIndex = notes.push(note) - 1;
-			//console.log("NoteId: " + noteId);
-			
+			let noteIndex = notes.push(note) - 1;			
 
 			if (noteId in openNotes && openNotes[noteId].length > 0) {
 				//console.log("Warning: Note already open (" + noteId + ") " + time);
@@ -846,10 +822,7 @@ function compileMidi(events, timeStep) {
 
 			let noteId = event["channel"] + " " + event["key"];
 			if (noteId in openNotes && openNotes[noteId].length > 0) {
-				//console.log("pre: " + openNotes[noteId].length);
 				let noteIndex = openNotes[noteId].shift();
-				//console.log("post: " + openNotes[noteId].length);
-				//console.log("test: " + openNotes[noteId]);
 				notes[noteIndex]["end"] = time;
 
 				//delete openNotes[noteId];
@@ -859,33 +832,6 @@ function compileMidi(events, timeStep) {
 		} else {
 			//console.log("Warning: Unsupported event (" + event["status"] + ")");
 		}
-/*
-			var testOpen = true;
-
-			var end = time;
-			for (var j = i+1; j < events.length; j++) {
-				var nextEvent = events[j];
-				end += nextEvent["time"];
-				//console.log("c "+nextEvent["velocity"]);
-				if (((nextEvent["status"] >> 4 == 0x8) || (nextEvent["status"] >> 4 == 0x9 && nextEvent["velocity"] == 0)) &&
-					nextEvent["key"] == event["key"] && (nextEvent["status"] & 0xF) == (event["status"] & 0xF)) {
-					//console.log("close");
-					//note["end"] = timeStep*end;
-					note["end"] = end;
-					testOpen = false;
-					break;
-				}
-			}
-
-			if (testOpen) {
-				console.log("LEFT OPEN " + note["start"] + " " + event["key"]);
-			} else {
-				notes.push(note);
-			}
-
-			
-		}
-		*/
 	}
 
 	for (let note in openNotes) {
@@ -897,6 +843,9 @@ function compileMidi(events, timeStep) {
 }
 
 function playMidi(notes) {
+	if (PLAYING) return;
+
+	PLAYING = true;
 	
 	var audioCtx = new (window.AudioContext || window.webkitAudioContext);
 	audioCtx.suspend();
@@ -989,14 +938,18 @@ function playMidi(notes) {
 		let wave = getWave();
 		wave["osc"].frequency.value = midiToFreq(note["key"]);
 
-		let bassBoost = (1+(110 - note["key"])/110) / 2;
+		//let bassBoost = (1+399*(110 - note["key"])/110) / 400;
+		let bassBoost = (1 + 3*Math.pow((110-note["key"])/87, 2)) / 4;
 		//bassBoost = 1;
 
-		wave["vol"].gain.setTargetAtTime(bassBoost * VOLUME * note["velocity"] / 127, 0, 0.005);
+		let volume = bassBoost * VOLUME * note["velocity"] / 127;
+		console.log(note["key"] + " " + note["velocity"]);
+
+		wave["vol"].gain.setTargetAtTime(volume, 0, 0.005);
 		//wave["vol"].gain.value = VOL
 		//wave["vol"].gain.value = VOLUME;
 		if (note["end"] - curTime > 0.25) {
-		wave["vol"].gain.setTargetAtTime(VOLUME/10, curTime + 0.2, 0.6);
+			wave["vol"].gain.setTargetAtTime(volume/10, curTime + 0.2, 0.6);
 		}
 		
 		//console.log(note["key"]);
@@ -1017,6 +970,8 @@ function playMidi(notes) {
 		//console.log("c: "+keys.length);
 		if (i < notes.length) {
 			setTimeout(playMidi_r, (notes[i]["start"] - curTime)*1000, i);
+		} else {
+			PLAYING = false;
 		}
 
 	}
@@ -1044,11 +999,10 @@ function playback() {
 
 
 	var audioCtx = new (window.AudioContext || window.webkitAudioContext);
-	// we create the gain module, named as volume, and connect it to our
+	
 	var volume = audioCtx.createGain();
 	volume.connect(audioCtx.destination);
-	//these sines are the same, exept for the last connect statement.
-	//Now they are connected to the volume gain module and not to the au
+
 	var wave = audioCtx.createOscillator();
 	wave.type = "triangle";
 	wave.frequency.value = 440;
