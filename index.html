@@ -17,7 +17,7 @@ _,e4,_,c4,d4,b3,_,_
 </button>
 
 
-<input type="file" id="fileUpload" accept=".mid" onChange="checkFile()">
+
 -->
 
 
@@ -25,10 +25,19 @@ _,e4,_,c4,d4,b3,_,_
 	<canvas id="canvas" style="bottom:0px">
 	  <p>Canvas not supported!</p>
 	</canvas>
-	
-	<button id="playButton" onClick="loadFile()">
-		Play
+	<button id="playButton" onClick="loadFile(1)">
+		1
 	</button>
+	<button id="playButton" onClick="loadFile(2)">
+		2
+	</button>
+	<button id="playButton" onClick="loadFile(3)">
+		3
+	</button>
+	<button id="playButton" onClick="loadFile(4)">
+		4
+	</button>
+	<input type="file" id="fileUpload" accept=".mid" onChange="checkFile()">
 </div>
 
 <script type="text/javascript">
@@ -449,7 +458,7 @@ function drawNotes(audioCtx, notes) {
 				drawNotes_r(audioCtx, notes, curNotes, i);
 			});
 		} else {
-			ctx.clearRect(0, 0, width, height);
+			//ctx.clearRect(0, 0, width, height);
 		}
 	}
 
@@ -484,7 +493,7 @@ function checkFile() {
 
 }
 
-function loadFile() {
+function loadFile(num) {
 
 	
 
@@ -496,7 +505,7 @@ function loadFile() {
 		}
 	};
 
-	xmlHttp.open("GET", "https://trey3stone.github.io/MIDI.js/miditest.mid", true);
+	xmlHttp.open("GET", "https://trey3stone.github.io/MIDI.js/test" + num + ".mid", true);
 	xmlHttp.responseType = "arraybuffer";
 	xmlHttp.send();
 
@@ -986,9 +995,9 @@ function playMidi(notes) {
 		wave["vol"].gain.setTargetAtTime(bassBoost * VOLUME * note["velocity"] / 127, 0, 0.005);
 		//wave["vol"].gain.value = VOL
 		//wave["vol"].gain.value = VOLUME;
-		//if (note["end"] - curTime > 0.5) {
-		wave["vol"].gain.setTargetAtTime(VOLUME/10, curTime + 0.25, 0.6);
-		//}
+		if (note["end"] - curTime > 0.25) {
+		wave["vol"].gain.setTargetAtTime(VOLUME/10, curTime + 0.2, 0.6);
+		}
 		
 		//console.log(note["key"]);
 		wave["vol"].gain.setTargetAtTime(0, note["end"], 0.005);
