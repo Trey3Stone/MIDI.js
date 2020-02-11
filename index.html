@@ -492,11 +492,12 @@ function loadFile() {
 	let xmlHttp = new XMLHttpRequest();
 	xmlHttp.onload = function() {
 		if (xmlHttp.status == 200) {
-			decodeFile(xmlHttp.responseText);
+			decodeFile(xmlHttp.response);
 		}
 	};
 
-	xmlHttp.open("GET", "miditest.mid", true);
+	xmlHttp.open("GET", "https://trey3stone.github.io/MIDI.js/miditest.mid", true);
+	xmlHttp.responseType = "arraybuffer";
 	xmlHttp.send();
 
 	
