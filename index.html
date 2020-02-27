@@ -21,23 +21,26 @@ _,e4,_,c4,d4,b3,_,_
 -->
 
 
-<div id='d1' style="position: absolute; bottom: 0px">
-	<canvas id="canvas" style="bottom:0px">
-	  <p>Canvas not supported!</p>
+<div id='d1' style="position: absolute; top: 0px">
+	<canvas id="canvas">
+		<p>Canvas not supported!</p>
 	</canvas>
-	<button id="playButton" onClick="loadFile(1)">
-		1
-	</button>
-	<button id="playButton" onClick="loadFile(2)">
-		2
-	</button>
-	<button id="playButton" onClick="loadFile(3)">
-		3
-	</button>
-	<button id="playButton" onClick="loadFile(4)">
-		4
-	</button>
-	<input type="file" id="fileUpload" accept=".mid" onChange="checkFile()">
+	<div id='d2' style="position: absolute; top: 0px">
+		<button id="playButton" onClick="loadFile(1)">
+			1
+		</button>
+		<button id="playButton" onClick="loadFile(2)">
+			2
+		</button>
+		<button id="playButton" onClick="loadFile(3)">
+			3
+		</button>
+		<button id="playButton" onClick="loadFile(4)">
+			4
+		</button>
+		<input type="file" id="fileUpload" accept=".mid" onChange="checkFile()">
+	</div>
+	
 </div>
 
 <script type="text/javascript">
@@ -111,11 +114,37 @@ _,e4,_,c4,d4,b3,_,_
 
 	const canvas = document.getElementById("canvas");
 	const ctx = canvas.getContext('2d');
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;//Width / 6;
 
+	
+	setupCanvas();
 	drawCanvas();
 
+function setupCanvas() {
+
+	const dpr = window.devicePixelRatio || 1;
+
+	const rect = canvas.getBoundingClientRect();
+
+	//console.log(canvas.style.width);
+
+	let width = window.innerWidth;
+	let height = window.innerHeight;
+
+	canvas.style.width = width + "px";
+	canvas.style.height = height + "px";
+
+	canvas.width = width * dpr;
+	canvas.height = height * dpr;//Width / 6;
+
+	
+
+	//ctx.scale(1/dpr, 1/dpr);
+
+
+	//ctx.fillStyle = "rgb(255, 0, 0)";
+	//ctx.fillRect(0, 0, 2000, 2000);
+
+}
 
 function drawCanvas() {
 	
@@ -173,11 +202,9 @@ function drawCanvas() {
 		if (NOTES[(9+i)%12][1] == '#') {
 			continue;
 		}
-
-
 		
 		//ctx.fillRect(xFill+1, canvas.height - keyHeight, keyWidth-2, keyHeight-2);
-		fillRoundedRect(xFill+1, 0, keyWidth-2, keyHeight-2, 2);
+		fillRoundedRect(xFill+1, 0, keyWidth-2, keyHeight-2, keyWidth/8);
 		xFill = xFill + keyWidth;
 	}
 
@@ -193,12 +220,12 @@ function drawCanvas() {
 
 		
 		//ctx.fillRect(xFill - keyWidth/4, canvas.height - keyHeight, keyWidth/2, keyHeight*0.6-2);
-		fillRoundedRect(xFill - keyWidth/4, 0, keyWidth/2, keyHeight*0.6-2, 2);
+		fillRoundedRect(xFill - keyWidth/4, 0, keyWidth/2, keyHeight*0.6-2, keyWidth/8);
 		
 	}
 
 	ctx.fillStyle = "rgb(255, 255, 255)";
-	ctx.lineWidth = 12;
+	ctx.lineWidth = 8;
 	fillRoundedRect(0, 0, width, 4, 2);
 
 	ctx.restore();
@@ -244,16 +271,10 @@ function fillLightRect(x, y, w, h, r) {
 
 	ctx.closePath();
 
-	//ctx.strokeStyle = "rgb(40, 40, 40)";
-	
 	ctx.shadowColor = ctx.strokeStyle;
 	ctx.shadowBlur = 10;
 
 	ctx.stroke();
-	//ctx.stroke();
-	//ctx.stroke();
-
-	//ctx.fill();
 
 	ctx.restore();
 }
@@ -335,15 +356,10 @@ function drawNotes(audioCtx, notes) {
 	var keyWidth = width/52;
 
 	function drawNotes_r(audioCtx, notes, curNotes, i) {
-		//console.log("1: " + curNotes.length);
 		var curTime = audioCtx.currentTime;
 
 		ctx.save();
 
-
-
-
-		
 
 		ctx.beginPath();
 		ctx.rect(0, 0, width, height);
@@ -401,23 +417,13 @@ function drawNotes(audioCtx, notes) {
 			return note["end"] > curTime;
 		});
 
-		//console.log("3: " + curNotes.length);
-
-		//ctx.strokeStyle = "rgb(40, 40, 40)";
-
-		let noteWidth = keyWidth;
+		let noteWidth = keyWidth / 3;
+		let xOffset = (keyWidth - noteWidth) / 2;
+		let yOffset = height / 250;
 
 		for (var note of curNotes) {
-
-
-
-
-			//let testColor = "hsl(" + (720 * note["channel"] / 16) + ", 100%, 60%)";
 			
-			//console.log(note["channel"]);
-
-			
-			let noteHeight = (note["end"] - note["start"]) / SIZE_SECONDS * height;
+			let noteHeight = (note["end"] - note["start"]) / SIZE_SECONDS * height - 2*yOffset;
 
 			//var noteX = width * (note["key"] - 21) / 52;
 
@@ -427,27 +433,13 @@ function drawNotes(audioCtx, notes) {
 
 
 
-			let noteY = height * (1 - (note["end"] - curTime) / SIZE_SECONDS);
+			let noteY = height * (1 - (note["end"] - curTime) / SIZE_SECONDS) + yOffset;
 
 			if (keyIsSharp(note["key"])) {
 				//noteWidth /= 2;
-				noteX -= noteWidth / 2;
+				noteX -= keyWidth / 2;
 				//noteWidth / 2;
 			}
-
-			//0	225	550	775
-			//0	225	190	55
-
-
-			
-
-
-			//ctx.fillRect(noteX, noteY, 20, noteHeight);
-			
-			
-
-			//ctx.lineWidth = 0;
-
 
 			let hue = (4*curTime + 10*note["start"] + 720 * (163*(1+note["channel"])%16) / 16)
 
@@ -462,13 +454,13 @@ function drawNotes(audioCtx, notes) {
 				ctx.strokeStyle = "hsl(" + hue + ", 80%, 80%)";
 				ctx.fillStyle = "hsl(" + hue + ", 80%, 80%)";
 
-				fillKeyBurst(noteX, height, keyWidth, 40);
+				fillKeyBurst(noteX, height, keyWidth, keyWidth);
 			}
 
 
 			//fillRoundedRect(noteX, noteY, noteWidth, noteHeight, 5);
 			
-			fillLightRect(noteX + keyWidth / 2 - 5, noteY, 10, noteHeight, 5);
+			fillLightRect(noteX + xOffset, noteY, noteWidth, noteHeight, noteWidth/2);
 			//ctx.fillRect(noteX, noteY, noteWidth, noteHeight);
 			
 			//fillLightRect(noteX, noteY, noteWidth, noteHeight);
@@ -493,13 +485,8 @@ function drawNotes(audioCtx, notes) {
 }
 
 function keyIsSharp(key) {
-	//key = key % 12;
 	return (key & 1) == ((key % 12) < 5);
-	//((key < 5) && (key & 1 == 1)) || 
 }
-
-
-
 
 function checkFile() {
 	if (PLAYING) return;
@@ -599,10 +586,7 @@ function decodeFile(res) {
 		let time = 0;
 
 		while(i < start + chunkLen - 1) {
-			
 			var next = data.getUint8(i++);
-
-			//console.log((i-1)+" " +(next));
 
 			dt = (dt << 7) | (next & 0x7f);
 			if ((next & 0x80) == 0) {
@@ -694,13 +678,9 @@ function decodeFile(res) {
 						alert("Something broke.");
 						console.log("ERROR");
 						return;
-						//while(data.getUint8(i++) >> 7 == 0)
 				}
 
-				//console.log("go1");
-				//if (testPutInEventsList) {
 				events.push(event);
-				//}
 				
 				
 			}
@@ -723,10 +703,6 @@ function decodeFile(res) {
 		return a;
 	}
 
-
-	//timing = compileMidi(readChunk(), ppqn);
-
-	//stream = [];
 	let stream = readChunk();
 
 	//var testcount = stream.length;
@@ -943,7 +919,7 @@ function playMidi(notes) {
 		//bassBoost = 1;
 
 		let volume = bassBoost * VOLUME * note["velocity"] / 127;
-		console.log(note["key"] + " " + note["velocity"]);
+		//console.log(note["key"] + " " + note["velocity"]);
 
 		wave["vol"].gain.setTargetAtTime(volume, 0, 0.005);
 		//wave["vol"].gain.value = VOL
