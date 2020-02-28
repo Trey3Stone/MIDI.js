@@ -6,16 +6,16 @@
 		<p>Canvas not supported!</p>
 	</canvas>
 	<div id='d2' style="position: absolute; top: 0px">
-		<button id="playButton" onClick="loadFile(1)">
+		<button id="preset1" onClick="loadFile(1)">
 			1
 		</button>
-		<button id="playButton" onClick="loadFile(2)">
+		<button id="preset2" onClick="loadFile(2)">
 			2
 		</button>
-		<button id="playButton" onClick="loadFile(3)">
+		<button id="preset3" onClick="loadFile(3)">
 			3
 		</button>
-		<button id="playButton" onClick="loadFile(4)">
+		<button id="preset4" onClick="loadFile(4)">
 			4
 		</button>
 		<input type="file" id="fileUpload" accept=".mid" onChange="checkFile()">
@@ -89,12 +89,7 @@
 	drawCanvas();
 
 function setupCanvas() {
-
 	const dpr = window.devicePixelRatio || 1;
-
-	const rect = canvas.getBoundingClientRect();
-
-	//console.log(canvas.style.width);
 
 	let width = window.innerWidth;
 	let height = window.innerHeight;
@@ -103,16 +98,7 @@ function setupCanvas() {
 	canvas.style.height = height + "px";
 
 	canvas.width = width * dpr;
-	canvas.height = height * dpr;//Width / 6;
-
-	
-
-	//ctx.scale(1/dpr, 1/dpr);
-
-
-	//ctx.fillStyle = "rgb(255, 0, 0)";
-	//ctx.fillRect(0, 0, 2000, 2000);
-
+	canvas.height = height * dpr;
 }
 
 function drawCanvas() {
@@ -153,12 +139,6 @@ function drawCanvas() {
 	ctx.clip();
 
 	ctx.strokeStyle = "rgb(16, 16, 16)";
-
-	//ctx.fillStyle = "rgb(40, 40, 40)";
-	//ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-	//ctx.strokeStyle = "rgb(40, 40, 40)";
-
 	
 	const keyHeight = height;
 
@@ -172,7 +152,6 @@ function drawCanvas() {
 			continue;
 		}
 		
-		//ctx.fillRect(xFill+1, canvas.height - keyHeight, keyWidth-2, keyHeight-2);
 		fillRoundedRect(xFill+1, 0, keyWidth-2, keyHeight-2, keyWidth/8);
 		xFill = xFill + keyWidth;
 	}
@@ -186,11 +165,7 @@ function drawCanvas() {
 			continue;
 		}
 
-
-		
-		//ctx.fillRect(xFill - keyWidth/4, canvas.height - keyHeight, keyWidth/2, keyHeight*0.6-2);
-		fillRoundedRect(xFill - keyWidth/4, 0, keyWidth/2, keyHeight*0.6-2, keyWidth/8);
-		
+		fillRoundedRect(xFill - keyWidth/4, 0, keyWidth/2, keyHeight*0.6-2, keyWidth/8);		
 	}
 
 	ctx.fillStyle = "rgb(255, 255, 255)";
@@ -290,8 +265,6 @@ function fillKeyBurst(x, y, w, r) {
 	ctx.arc(0, w/2, r + w/2, -3*Math.PI/4, -Math.PI/4);
 	ctx.lineTo(w/2, 0);
 	ctx.closePath();
-	ctx.clip();
-
 
 	let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
 	grad.addColorStop(0, ctx.fillStyle);
@@ -301,17 +274,10 @@ function fillKeyBurst(x, y, w, r) {
 	grad.addColorStop(0.875, ctx.fillStyle + "04");
 	grad.addColorStop(1, ctx.fillStyle + "00");
 
-
 	ctx.fillStyle = grad;
 
-	//ctx.shadowColor = grad;
-	//ctx.shadowBlur = 10;
-
-	ctx.fillRect(-r, -r, 2*r, 2*r);
-
-	//ctx.stroke();
-	
-	//ctx.fill();
+	ctx.shadowBlur = 10;
+	ctx.fill();
 
 	ctx.restore();
 }
@@ -401,10 +367,6 @@ function drawNotes(audioCtx, notes) {
 		while (noteI < notes.length) {
 			var note = notes[noteI];
 			if (note["start"] <= (curTime + SIZE_SECONDS)) {
-				//console.log("added");
-				//console.log(noteI);
-				//if (keyIsSharp(note["key"])) {
-
 				let noteHeight = (note["end"] - note["start"]) / SIZE_SECONDS * height - 2*yOffset;
 
 				note["path"] = makeCapsule(noteWidth, noteHeight);
@@ -423,18 +385,13 @@ function drawNotes(audioCtx, notes) {
 
 		for (var note of curNotes) {			
 			let noteX = (2 + (Math.floor(note["key"] / 12) - 2) * 7  + KEY_DRAW_OFFSETS[note["key"] % 12]) * keyWidth;
-			//let noteY = height * (1 - (note["end"] - curTime) / SIZE_SECONDS);
-
 			let noteY = timeToY(note["end"], curTime);
 
 			if (keyIsSharp(note["key"]))
 				noteX -= keyWidth / 2;
 
 			let hue = (4*curTime + 10*note["start"] + 720 * (163*(1+note["channel"])%16) / 16);
-
-			let color = `hsl(${hue}, 80%, ${((note["start"] > curTime) ? "60%" : "80%")})`;
-
-			//let color = "hsl(" + hue + ", 80%, " + ((note["start"] > curTime) ? "60%" : "80%") + ")";
+			let color = `hsl(${hue}, 80%, ${(note["start"] > curTime) ? "60%" : "80%"})`;
 
 			ctx.fillStyle = color;
 			ctx.strokeStyle = color;
@@ -447,9 +404,7 @@ function drawNotes(audioCtx, notes) {
 			ctx.save();
 			ctx.translate(noteX + xOffset, noteY + yOffset);
 
-			//ctx.shadowColor = ctx.strokeStyle;
 			ctx.shadowBlur = 10;
-
 			ctx.stroke(note["path"]);
 
 			ctx.restore();
@@ -475,8 +430,7 @@ function keyIsSharp(key) {
 
 function checkFile() {
 	if (PLAYING) return;
-	//document.write(note+"<br>");
-	
+
 	var inputFile = document.getElementById("fileUpload").files[0];
 
 	if (inputFile == undefined) {
@@ -490,7 +444,6 @@ function checkFile() {
 	}
 
 	reader.readAsArrayBuffer(inputFile);
-
 }
 
 function loadFile(num) {
@@ -519,8 +472,6 @@ function decodeFile(res) {
  	var ntracks = data.getUint16(10);
  	var tickdiv = data.getUint16(12);
 
-	console.log("ntracks: " +ntracks);
-
  	if (tickdiv & 0x8000 != 0) {
  		alert("Timecodes not implemented yet");
  		return;
@@ -533,11 +484,7 @@ function decodeFile(res) {
 
  	var ppqn = tickdiv & 0x7fff;
 
-	console.log("speeedd"+tickdiv);
-
 	chunkLen = data.getUint32(18);
-
-	console.log("Tempo Chunk size: "+chunkLen);
 
 	var start = 14;
 
@@ -550,7 +497,7 @@ function decodeFile(res) {
 			[data.getUint8(i), data.getUint8(i+1), data.getUint8(i+2), data.getUint8(i+3)]);
 
 		if (chunkId != "MTrk") {
-			alert(chunkId);
+			alert("Malformed track chunk");
 			return;
 		}
 
@@ -626,30 +573,13 @@ function decodeFile(res) {
 
 									event["step"] = timeStep;
 
-
-									//console.log("bpm: " + BPM);
 									break;
 								default:
 									var length = data.getUint8(i++);
 									i+=length;
-							}
-
-
-							
-						} else {
-							console.log(event["status"] + " " + data.getUint8(i));
+							}	
 						}
-							/*if ((opt >> 4) == 0) {
-								i+=data.getUint8(i);
-							} else {
-								if (opt == 0x2F) {
-									//return events;
-								}
-							}
-						} else {
-							i+=data.getUint8(i);
-						}*/
-						//console.log(event["status"] + " " + data.getUint8(i));
+						
 						break;
 					default:
 						alert("Something broke.");
@@ -694,35 +624,8 @@ function decodeFile(res) {
 	playMidi(stream);
 }
 
-function noteToFreq(note) {
-	
-	if (note[0] == '_') {
-		return 0;
-	}
-
-	var key = note.slice(0, -1);
-	var oct = note.slice(-1);
-
-	//document.write(note+' '+key+' '+oct+'<br>');
-
-	// TODO: assert key and oct are valid
-
-	var freq = A0_FREQ * Math.pow(2, parseInt(oct) + (NOTE_TABLE[key] - 9)/12);
-	return freq;
-}
-
 function midiToFreq(note) {
-	//21-108
-	//console.log('note '+note);
 	return A0_FREQ * Math.pow(2, (note-21)/12);
-}
-
-function compile() {
-	var inputNotes = document.getElementById("inputNotes").value.trim().toLowerCase().replace(/\n/g, '').split(",");
-
-	var notes = inputNotes.map(function(value) {return noteToFreq(value);});
-
-	return notes;
 }
 
 function compileMidi(events, timeStep) {
@@ -793,18 +696,10 @@ function playMidi(notes) {
 	
 	var audioCtx = new (window.AudioContext || window.webkitAudioContext);
 	audioCtx.suspend();
-	//console.log(events.length);
-
-	console.log(audioCtx.currentTime + " sec FIRST");
 
 	let waves = [];
-	//let keyWaves = {};
 
-	var wc = 0;
-
-	//var delay = audioCtx.createDelay(SIZE_SECONDS);
-	//delay.delayTime.value = SIZE_SECONDS;
-	//delay.connect(audioCtx.destination)
+	//var wc = 0;
 
 	function newWave() {
 		
@@ -827,7 +722,7 @@ function playMidi(notes) {
 	function getWave() {
 		var wave = waves.shift();
 		if (wave == undefined) {
-			console.log("New wave " + (++wc));
+			//console.log("New wave " + (++wc));
 			wave = newWave();
 		}
 
@@ -836,15 +731,12 @@ function playMidi(notes) {
 		return wave;
 	}
 
-	console.log(notes[0]["start"] + " asasfa");
-
-	//var i = 0;
-
 	//TODO: HANDLE MULTIPLE IN ONE PASS
 
-	function playMidi_r(i) {
-		//console.log(++i + "events processed");
-		let curTime = audioCtx.currentTime;// - SIZE_SECONDS;
+	let noteI = 0;
+
+	function playMidi_r() {
+		let curTime = audioCtx.currentTime;
 
 
 		//console.log(curTime + " sec");
@@ -853,7 +745,7 @@ function playMidi(notes) {
 		//do {
 			//console.log("note");
 		//var note = notes.shift();
-		let note = notes[i++];
+		let note = notes[noteI];
 		//
 
 		if ((note["start"] - curTime) >= 0.1) {
@@ -893,12 +785,13 @@ function playMidi(notes) {
 		//} while(keys[0]["start"] == key["start"]);
 
 		//console.log("c: "+keys.length);
-		if (i < notes.length) {
-			setTimeout(playMidi_r, (notes[i]["start"] - curTime)*1000, i);
+		if (noteI < notes.length - 1) {
+			setTimeout(playMidi_r, (notes[noteI + 1]["start"] - curTime)*1000);
 		} else {
 			PLAYING = false;
 		}
 
+		noteI++;
 	}
 
 	for (var i = 0; i < 20; i++) {
@@ -908,62 +801,10 @@ function playMidi(notes) {
 	audioCtx.resume();
 	if (notes.length > 0) {
 		setTimeout(playMidi_r, (notes[0]["start"] - audioCtx.currentTime)*1000, 0);
-/*
-		setTimeout(function() {
-			audioCtx.resume();
-			setTimeout(playMidi_r, (keys[0]["start"])*1000);
-		}, SIZE_SECONDS * 1000);*/
 	}
 
 	drawNotes(audioCtx, notes);
 }
-
-
-function playback() {
-	var notes = compile()
-
-
-	var audioCtx = new (window.AudioContext || window.webkitAudioContext);
-	
-	var volume = audioCtx.createGain();
-	volume.connect(audioCtx.destination);
-
-	var wave = audioCtx.createOscillator();
-	wave.type = "triangle";
-	wave.frequency.value = 440;
-	//wave.detune.value = -100;
-	//sinea.type = "sine";
-	volume.gain.value = 0;
-	wave.start();
-	//wave.stop(audioCtx.currentTime + 3);
-	wave.connect(volume);
-
-	playRecursive(audioCtx, wave, volume, notes, 0);
-
-}
-
-function playRecursive(context, wave, volume, notes, i) {
-	if (i >= notes.length) {
-		wave.stop(context.currentTime + 0.1);
-		return;
-	}
-
-	
-
-	if (notes[i] != 0) {
-		
-
-		wave.frequency.value = notes[i];
-		//volume.gain.value = 0.2;
-		volume.gain.setTargetAtTime(VOLUME, context.currentTime, 0.01);
-
-		volume.gain.setTargetAtTime(0, context.currentTime + 0.9*METER, 0.01);
-	}
-
-	setTimeout(playRecursive, 1000*METER, context, wave, volume, notes, i+1);
-}
-
-
 
 </script>
 
