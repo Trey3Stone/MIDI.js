@@ -1,26 +1,6 @@
 <html>
 <body bgcolor="#202020" scroll="no" style="margin: 0; overflow: hidden;">
 
-<!--
-<textarea id="inputNotes">
-e4,e4,_,e4,_,c4,e4,_,
-g4,_,_,_,g3,_,_,_,
-c4,_,_,g3,_,_,e3,_,
-_,a3,_,b3,_,a#3,a3,_,
-g3,e4,g4,a4,_,f4,g4,
-_,e4,_,c4,d4,b3,_,_
-</textarea>
-
-
-<button id="playButton" onClick="playback()">
-	Play
-</button>
-
-
-
--->
-
-
 <div id='d1' style="position: absolute; top: 0px">
 	<canvas id="canvas">
 		<p>Canvas not supported!</p>
@@ -44,21 +24,14 @@ _,e4,_,c4,d4,b3,_,_
 </div>
 
 <script type="text/javascript">
-	// DoReMi: c3,d3,e3,f3,g3,a3,b3,c4
-//
 
 	const A0_FREQ = 27.5;
 	const KEYS = 8;
 
 	const VOLUME = 0.2;
 
-	const TEMPO = 45; // Supports 8th notes
-	const METER = 60 / TEMPO / 8;
-
 	const SIZE_SECONDS = 3;
 	const PLAYBACK_DELAY = 2;
-
-	
 
 	const NOTE_STEP = Math.pow(2, 1/12);
 
@@ -107,15 +80,11 @@ _,e4,_,c4,d4,b3,_,_
 		6
 	]
 
-
 	let PLAYING = false;
-
-	//var BPM = 120;
 
 	const canvas = document.getElementById("canvas");
 	const ctx = canvas.getContext('2d');
 
-	
 	setupCanvas();
 	drawCanvas();
 
@@ -279,22 +248,41 @@ function fillLightRect(x, y, w, h, r) {
 	ctx.restore();
 }
 
+function makeRoundedRect(w, h, r) {
+	let path = new Path2D();
+
+	path.arc(r, r, r, Math.PI, 3*Math.PI/2);
+	path.arc(w - r, r, r, 3*Math.PI/2, 0);
+	path.arc(w - r, h - r, r, 0, Math.PI/2);
+	path.arc(r, h - r, r, Math.PI/2, Math.PI);
+
+	path.closePath();
+
+	return path;
+}
+
+
+function makeCapsule(w, h) {
+	h = Math.max(h, w);
+	let r = w/2;
+
+	let path = new Path2D();
+
+	path.arc(r, r, r, Math.PI, 0);
+	path.arc(r, h - r, r, 0, Math.PI);
+
+	path.closePath();
+
+	return path;
+}
+
 function fillKeyBurst(x, y, w, r) {
 	const RES = 10;
 	const ANG = Math.PI / 4;
 	const STEP = 2 * ANG / RES;
 
-	//const OFFSET = (w/2)/(Math.tan(ANG));
-
 	ctx.save();
-
 	
-
-
-	//theta = (w/2)/(tan(ANG))
-
-	//console.log(ctx.fillStyle + "00");
-
 	ctx.translate(x + w/2, y);
 
 	ctx.beginPath();
@@ -330,7 +318,6 @@ function fillKeyBurst(x, y, w, r) {
 
 function drawNotes(audioCtx, notes) {
 	
-	/*
 	const times = [];
 	let fps;
 
@@ -348,12 +335,20 @@ function drawNotes(audioCtx, notes) {
 	}
 
 	refreshLoop();
-	*/
 
-	var width = canvas.width;
-	var height = canvas.height - Math.ceil(canvas.width/10);
+	function timeToY(target, current) {
+		return height * (1 - (target - current) / SIZE_SECONDS);
+	}
 
-	var keyWidth = width/52;
+	let noteI = 0;
+
+	let width = canvas.width;
+	let height = canvas.height - Math.ceil(canvas.width/10);
+
+	let keyWidth = width/52;
+	let noteWidth = keyWidth / 3;
+	let xOffset = (keyWidth - noteWidth) / 2;
+	let yOffset = height / 250;
 
 	function drawNotes_r(audioCtx, notes, curNotes, i) {
 		var curTime = audioCtx.currentTime;
@@ -374,10 +369,8 @@ function drawNotes(audioCtx, notes) {
 		ctx.beginPath();
 
 		for (let i = 2; i < 52; i+=7) {
-			
 			ctx.moveTo(i * keyWidth, 0);
 			ctx.lineTo(i * keyWidth, height);
-			
 		}
 
 
@@ -388,96 +381,88 @@ function drawNotes(audioCtx, notes) {
 			ctx.lineTo(width, height - y);
 		}
 
-
-
 		ctx.stroke();
+
+		if (curTime <= PLAYBACK_DELAY) {
+			let y = timeToY(PLAYBACK_DELAY, curTime);
+			ctx.beginPath()
+			ctx.moveTo(0, y);
+			ctx.lineTo(width, y);
+
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = "rgb(200, 200, 200)";
+
+			ctx.stroke()
+		}
 		
 
 		ctx.lineWidth = 4;
 
-		//for (var note of notes) {
-		while (i < notes.length) {
-			var note = notes[i];
+		while (noteI < notes.length) {
+			var note = notes[noteI];
 			if (note["start"] <= (curTime + SIZE_SECONDS)) {
 				//console.log("added");
+				//console.log(noteI);
 				//if (keyIsSharp(note["key"])) {
-					curNotes.push(note);
-				//} else {
-				//	curNotes.unshift(note);
-				//}
+
+				let noteHeight = (note["end"] - note["start"]) / SIZE_SECONDS * height - 2*yOffset;
+
+				note["path"] = makeCapsule(noteWidth, noteHeight);
+
+				curNotes.push(note);
 				
-				i++;
+				noteI++;
 			} else {
 				break;
 			}
 		}
-		//console.log("2: " + curNotes.length);
 
 		curNotes = curNotes.filter(function(note) {
 			return note["end"] > curTime;
 		});
 
-		let noteWidth = keyWidth / 3;
-		let xOffset = (keyWidth - noteWidth) / 2;
-		let yOffset = height / 250;
-
-		for (var note of curNotes) {
-			
-			let noteHeight = (note["end"] - note["start"]) / SIZE_SECONDS * height - 2*yOffset;
-
-			//var noteX = width * (note["key"] - 21) / 52;
-
-			//console.log(noteX);
+		for (var note of curNotes) {			
 			let noteX = (2 + (Math.floor(note["key"] / 12) - 2) * 7  + KEY_DRAW_OFFSETS[note["key"] % 12]) * keyWidth;
-			//(note["key"] - 21) * keyWidth;
+			//let noteY = height * (1 - (note["end"] - curTime) / SIZE_SECONDS);
 
+			let noteY = timeToY(note["end"], curTime);
 
-
-			let noteY = height * (1 - (note["end"] - curTime) / SIZE_SECONDS) + yOffset;
-
-			if (keyIsSharp(note["key"])) {
-				//noteWidth /= 2;
+			if (keyIsSharp(note["key"]))
 				noteX -= keyWidth / 2;
-				//noteWidth / 2;
-			}
 
-			let hue = (4*curTime + 10*note["start"] + 720 * (163*(1+note["channel"])%16) / 16)
+			let hue = (4*curTime + 10*note["start"] + 720 * (163*(1+note["channel"])%16) / 16);
 
-			if (note["start"] > curTime) {
-				ctx.strokeStyle = "hsl(" + hue + ", 80%, 60%)";
-				ctx.fillStyle = "hsl(" + hue + ", 80%, 60%)";
-				//ctx.fillStyle = "rgb(200, 100, 100)";
-				//fillKeyBurst(noteX, height, noteWidth, 40);
-			} else {
-				//let testColor = "hsl(" + (720 * (163*note["channel"]%16) / 16) + ", 80%, 60%)";
-				//ctx.fillStyle = testColor;
-				ctx.strokeStyle = "hsl(" + hue + ", 80%, 80%)";
-				ctx.fillStyle = "hsl(" + hue + ", 80%, 80%)";
+			let color = `hsl(${hue}, 80%, ${((note["start"] > curTime) ? "60%" : "80%")})`;
 
+			//let color = "hsl(" + hue + ", 80%, " + ((note["start"] > curTime) ? "60%" : "80%") + ")";
+
+			ctx.fillStyle = color;
+			ctx.strokeStyle = color;
+			ctx.shadowColor = color;
+
+			if (note["start"] <= curTime) {
 				fillKeyBurst(noteX, height, keyWidth, keyWidth);
 			}
 
+			ctx.save();
+			ctx.translate(noteX + xOffset, noteY + yOffset);
 
-			//fillRoundedRect(noteX, noteY, noteWidth, noteHeight, 5);
-			
-			fillLightRect(noteX + xOffset, noteY, noteWidth, noteHeight, noteWidth/2);
-			//ctx.fillRect(noteX, noteY, noteWidth, noteHeight);
-			
-			//fillLightRect(noteX, noteY, noteWidth, noteHeight);
+			//ctx.shadowColor = ctx.strokeStyle;
+			ctx.shadowBlur = 10;
 
-			
+			ctx.stroke(note["path"]);
+
+			ctx.restore();
+
 		}
-
 
 
 		ctx.restore();
 
-		if (curNotes.length > 0 || i < notes.length) {
+		if (curNotes.length > 0 || noteI < notes.length) {
 			window.requestAnimationFrame(function(timestamp) {
 				drawNotes_r(audioCtx, notes, curNotes, i);
 			});
-		} else {
-			//ctx.clearRect(0, 0, width, height);
 		}
 	}
 
@@ -521,11 +506,6 @@ function loadFile(num) {
 	xmlHttp.open("GET", "https://trey3stone.github.io/MIDI.js/test" + num + ".mid", true);
 	xmlHttp.responseType = "arraybuffer";
 	xmlHttp.send();
-
-	
-
-	
-
 }
 
 function decodeFile(res) {
@@ -590,7 +570,6 @@ function decodeFile(res) {
 
 			dt = (dt << 7) | (next & 0x7f);
 			if ((next & 0x80) == 0) {
-				//console.log("go0");
 				time += dt;
 				dt = 0;
 				event = {"time" : time};
@@ -602,8 +581,6 @@ function decodeFile(res) {
 				} else {
 					lastStatus = event["status"];
 				}
-
-				//console.log("EVENT: " + event["status"] + " " + (i - 1 - start) + " " + event["time"]);
 
 				switch(event["status"] >> 4) {
 					case 0x8:
@@ -690,7 +667,7 @@ function decodeFile(res) {
 		return events;
 	}
 
-	function mergeStreams(a, b) { // Add key as param?
+	function mergeStreams(a, b) {
 		var i = 0;
 		while (b.length > 0) {
 			if (a[i] == undefined || b[0]["time"] < a[i]["time"]) {
@@ -705,20 +682,11 @@ function decodeFile(res) {
 
 	let stream = readChunk();
 
-	//var testcount = stream.length;
 	console.log("length: " + stream.length);
 	for (let n = 1; n < ntracks; n++) {
-		//console.log("track");
-		//var test = compileMidi(timing, readChunk());
-		//console.log("length: " + test.length);
-		//testcount += test.length;
-		//mergeStreams(stream, test);
 		let track = readChunk();
 		mergeStreams(stream, track);
 	}
-
-	//console.log(testcount + " " + stream.length);
-	//var keys = compileMidi(streams[0], ppqn);
 
 	const DEFAULT_BPM = 120;
 	stream = compileMidi(stream, 60 / (DEFAULT_BPM*ppqn));
@@ -847,8 +815,6 @@ function playMidi(notes) {
 		vol.gain.value = 0;
 
 		osc.connect(vol);
-		//vol.connect(delay);
-		//vol.connect(audioCtx.destination);
 		osc.start();
 
 		var wave = {"osc" : osc, "vol" : vol};
@@ -859,30 +825,13 @@ function playMidi(notes) {
 	// TODO: Percussion as sine?
 
 	function getWave() {
-		//console.log('before'+waves.length);
 		var wave = waves.shift();
-		//console.log('after '+waves.length);
 		if (wave == undefined) {
 			console.log("New wave " + (++wc));
-			//waves.push(newWave());
 			wave = newWave();
-
-			
-			
-			//wave.onended = function() {
-				//waves.push(this);
-			//}
-			
-			
-			//wave.start();
-		} else {
-			//console.log("Old wave");
 		}
 
-
-
 		wave["vol"].connect(audioCtx.destination);
-		//wave["osc"].start();
 
 		return wave;
 	}
