@@ -43,20 +43,6 @@
 		'b' : 11
 	}
 
-	const NOTES = [
-		'c' ,
-		'c#',
-		'd' ,
-		'd#',
-		'e' ,
-		'f' ,
-		'f#',
-		'g' ,
-		'g#',
-		'a' ,
-		'a#',
-		'b'
-	]
 
 	function checkFile() {
 
@@ -98,8 +84,8 @@
 	}
 
 	// TODO: connect player to renderer
-	let player = new Player();
 	let renderer = new Renderer();
+	let player = new Player(renderer);
 
 
 </script>
