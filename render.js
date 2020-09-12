@@ -38,6 +38,7 @@ function Renderer() {
 		canvas.height = height * dpr;
 
 
+
 /*
 		let keyWidth = width/52;
 		let noteWidth = keyWidth / 3;
