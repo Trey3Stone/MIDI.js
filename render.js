@@ -60,7 +60,7 @@ function Renderer() {
 
 		let width = canvas.width;
 		const keyWidth = width/52;
-		let height = canvas.height - Math.ceil(width / 15);
+		let height = canvas.height - Math.ceil(width / 12);
 
 		ctx.lineWidth = 0;
 		ctx.strokeStyle = "rgb(60, 60, 60)";
@@ -83,7 +83,7 @@ function Renderer() {
 		ctx.stroke();
 
 
-		height = Math.ceil(width / 15);
+		height = Math.ceil(width / 12);
 
 		ctx.translate(0, canvas.height - height)
 
@@ -269,7 +269,7 @@ function Renderer() {
 		let notes = track.notes;
 
 		let width = canvas.width;
-		let height = canvas.height - Math.ceil(canvas.width/15);
+		let height = canvas.height - Math.ceil(canvas.width/12);
 
 		let keyWidth = width/52;
 		let noteWidth = keyWidth / 3;
