@@ -18,6 +18,12 @@
 		<button id="preset4" onClick="loadFile(4)">
 			4
 		</button>
+		<button id="preset4" onClick="loadFile(5)">
+			5
+		</button>
+		<button id="preset4" onClick="loadFile(6)">
+			6
+		</button>
 		<input type="file" id="fileUpload" accept=".mid" onChange="checkFile()">
 	</div>
 	
@@ -91,6 +97,10 @@
 
 	function playFile(file) {
 		console.log("go0");
+
+		let buttons = document.getElementById("d2");
+		buttons.parentNode.removeChild(buttons);
+
 		let stream = decodeFile(file);
 		console.log("go1");
 		player.play(stream);

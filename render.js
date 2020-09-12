@@ -59,7 +59,7 @@ function Renderer() {
 
 		let width = canvas.width;
 		const keyWidth = width/52;
-		let height = canvas.height - Math.ceil(width / 10);
+		let height = canvas.height - Math.ceil(width / 15);
 
 		ctx.lineWidth = 0;
 		ctx.strokeStyle = "rgb(60, 60, 60)";
@@ -82,7 +82,7 @@ function Renderer() {
 		ctx.stroke();
 
 
-		height = Math.ceil(width / 10);
+		height = Math.ceil(width / 15);
 
 		ctx.translate(0, canvas.height - height)
 
@@ -95,7 +95,7 @@ function Renderer() {
 		const keyHeight = height;
 
 		var xFill = 0;
-		ctx.fillStyle = "rgb(255, 255, 255)";
+		ctx.fillStyle = "rgb(240, 240, 240)";
 		
 		ctx.lineWidth = 2;
 
@@ -256,7 +256,7 @@ function Renderer() {
 */
 		
 
-		console.log("DRAW " + nextEvent);
+		//console.log("DRAW " + nextEvent);
 
 
 		function timeToY(target, current) {
@@ -268,7 +268,7 @@ function Renderer() {
 		let notes = track.notes;
 
 		let width = canvas.width;
-		let height = canvas.height - Math.ceil(canvas.width/10);
+		let height = canvas.height - Math.ceil(canvas.width/15);
 
 		let keyWidth = width/52;
 		let noteWidth = keyWidth / 3;
@@ -322,9 +322,9 @@ function Renderer() {
 			}
 			
 
-			ctx.fillStyle = "rgb(255,0,255)";
+			//ctx.fillStyle = "rgb(255,255,255)";
 			//console.log(width * curTime / track.duration);
-			ctx.fillRect(0, 0, width * curTime / track.duration, 200);
+			//ctx.fillRect(0, 0, width * curTime / track.duration, 200);
 
 
 			ctx.lineWidth = 4;
